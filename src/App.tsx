@@ -21,16 +21,10 @@ type DragState = {
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
+// Track pointer state across the window so dragging continues outside the board.
+
 export const App = () => {
-  const [notes, setNotes] = useState<Note[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    try {
-      return stored ? (JSON.parse(stored) as Note[]) : [];
-    } catch {
-      return [];
-    }
-  });
-  
+  const [notes, setNotes] = useState<Note[]>([]);
   const [form, setForm] = useState({
     x: 80,
     y: 80,
@@ -49,8 +43,20 @@ export const App = () => {
   }, [notes.length]);
 
   useEffect(() => {
+    // Local-first load with a best-effort async sync from the mocked API.
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as Note[];
+        if (Array.isArray(parsed)) {
+          setNotes(parsed);
+        }
+      } catch {
+        // ignore invalid stored data
+      }
+    }
+
     let isActive = true;
-    
     fetchNotes()
       .then((remoteNotes) => {
         if (isActive && remoteNotes.length > 0) {
@@ -58,7 +64,7 @@ export const App = () => {
         }
       })
       .catch(() => {
-        console.warn("Failed to fetch notes from API");
+        // ignore mock API failures
       });
 
     return () => {
@@ -66,15 +72,15 @@ export const App = () => {
     };
   }, []);
 
-
   useEffect(() => {
+    // Persist notes after each change and sync them asynchronously.
     localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
-    console.log("Saved notes to localStorage:", notes);
     saveNotes(notes).catch(() => {
       // ignore mock API failures
     });
   }, [notes]);
 
+  // Move the selected note to the end of the array for simple z-ordering.
   const bringNoteToFront = (id: string) => {
     setNotes((prev) => {
       const index = prev.findIndex((note) => note.id === id);

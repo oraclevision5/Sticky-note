@@ -50,6 +50,7 @@ export const NoteCard = ({
   };
 
   const handleTitleBlur = () => {
+    // Normalize empty titles after editing.
     if (!note.title.trim()) {
       onUpdateTitle(note.id, "Untitled note");
     }
