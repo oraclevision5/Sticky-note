@@ -7,6 +7,7 @@ A single-page sticky notes application built with React and TypeScript.
 - Drag note headers to move them.
 - Drag the corner handle to resize notes.
 - Drop notes onto the trash zone to delete them.
+- Rename notes directly in their headers and assign colors.
 - Notes are persisted in local storage and synced to a mocked async API.
 
 ## Getting started

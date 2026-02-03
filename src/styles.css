@@ -46,6 +46,10 @@ body {
   gap: 12px;
 }
 
+.span-2 {
+  grid-column: span 2;
+}
+
 .color-picker {
   display: grid;
   gap: 8px;
@@ -128,6 +132,19 @@ input {
 .note-colors {
   display: flex;
   gap: 6px;
+}
+
+.note-title {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  font-size: 0.9rem;
+  min-width: 0;
+}
+
+.note-title:focus {
+  outline: none;
 }
 
 .color-swatch {

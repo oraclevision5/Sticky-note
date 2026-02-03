@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { fetchNotes, saveNotes } from "./api";
+import { COLOR_POOL, MIN_HINT, STORAGE_KEY } from "./constants";
+import { NoteCard } from "./NoteCard";
 import type { Note } from "./types";
 
 type DragMode = "move" | "resize";
@@ -15,10 +17,6 @@ type DragState = {
   originHeight: number;
 };
 
-const COLOR_POOL = ["#fff2a8", "#ffd1dc", "#d9f8d9", "#d7e8ff", "#ffe0b5"];
-const MIN_HINT = 120;
-const STORAGE_KEY = "sticky-notes";
-
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 
@@ -29,7 +27,8 @@ export const App = () => {
     y: 80,
     width: 220,
     height: 180,
-    color: COLOR_POOL[0]
+    color: COLOR_POOL[0],
+    title: "New note"
   });
   const dragRef = useRef<DragState | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -180,10 +179,12 @@ export const App = () => {
 
   const handleAddNote = () => {
     const id = crypto.randomUUID();
+    const title = form.title.trim() || "Untitled note";
     setNotes((prev) => [
       ...prev,
       {
         id,
+        title,
         x: form.x,
         y: form.y,
         width: form.width,
@@ -197,6 +198,12 @@ export const App = () => {
   const updateNoteText = (id: string, text: string) => {
     setNotes((prev) =>
       prev.map((note) => (note.id === id ? { ...note, text } : note))
+    );
+  };
+
+  const updateNoteTitle = (id: string, title: string) => {
+    setNotes((prev) =>
+      prev.map((note) => (note.id === id ? { ...note, title } : note))
     );
   };
 
@@ -215,6 +222,19 @@ export const App = () => {
           to move it or the corner to resize.
         </p>
         <div className="field-grid">
+          <label className="span-2">
+            Title
+            <input
+              type="text"
+              value={form.title}
+              onChange={(event) =>
+                setForm((prev) => ({
+                  ...prev,
+                  title: event.target.value
+                }))
+              }
+            />
+          </label>
           <label>
             X
             <input
@@ -301,55 +321,15 @@ export const App = () => {
       </aside>
       <main ref={boardRef} className="board">
         {notes.map((note) => (
-          <article
+          <NoteCard
             key={note.id}
-            className="note"
-            style={{
-              top: note.y,
-              left: note.x,
-              width: note.width,
-              height: note.height,
-              background: note.color
-            }}
-            onPointerDown={() => bringNoteToFront(note.id)}
-          >
-            <header
-              className="note-header"
-              onPointerDown={(event) => startDrag(event, note.id, "move")}
-            >
-              <span>Drag me</span>
-              <div className="note-colors">
-                {COLOR_POOL.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    className={`color-swatch${note.color === color ? " selected" : ""}`}
-                    style={{ background: color }}
-                    onPointerDown={(event) => {
-                      event.stopPropagation();
-                    }}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      updateNoteColor(note.id, color);
-                    }}
-                    aria-label={`Set note color to ${color}`}
-                  />
-                ))}
-              </div>
-            </header>
-            <textarea
-              className="note-body"
-              value={note.text}
-              onChange={(event) => updateNoteText(note.id, event.target.value)}
-              placeholder="Write something..."
-            />
-            <button
-              type="button"
-              className="resize-handle"
-              aria-label="Resize note"
-              onPointerDown={(event) => startDrag(event, note.id, "resize")}
-            />
-          </article>
+            note={note}
+            onBringToFront={bringNoteToFront}
+            onStartDrag={startDrag}
+            onUpdateTitle={updateNoteTitle}
+            onUpdateText={updateNoteText}
+            onUpdateColor={updateNoteColor}
+          />
         ))}
         <div ref={trashRef} className="trash-zone">
           <div className="trash-icon">🗑️</div>
