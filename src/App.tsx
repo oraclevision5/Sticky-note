@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { fetchNotes, saveNotes } from "./api";
 import { COLOR_POOL, MIN_HINT, STORAGE_KEY } from "./constants";
-import { NoteCard } from "./NoteCard";
+import { NoteCard } from "./components/NoteCard";
+import { NoteCreatorPanel } from "./components/NoteCreatorPanel";
 import type { Note } from "./types";
 
 type DragMode = "move" | "resize";
@@ -215,110 +216,7 @@ export const App = () => {
 
   return (
     <div className="app">
-      <aside className="panel">
-        <h1>Sticky Notes</h1>
-        <p className="subtitle">
-          Create a note by choosing its position and size, then drag the header
-          to move it or the corner to resize.
-        </p>
-        <div className="field-grid">
-          <label className="span-2">
-            Title
-            <input
-              type="text"
-              value={form.title}
-              onChange={(event) =>
-                setForm((prev) => ({
-                  ...prev,
-                  title: event.target.value
-                }))
-              }
-            />
-          </label>
-          <label>
-            X
-            <input
-              type="number"
-              value={form.x}
-              min={0}
-              onChange={(event) =>
-                setForm((prev) => ({
-                  ...prev,
-                  x: Number(event.target.value)
-                }))
-              }
-            />
-          </label>
-          <label>
-            Y
-            <input
-              type="number"
-              value={form.y}
-              min={0}
-              onChange={(event) =>
-                setForm((prev) => ({
-                  ...prev,
-                  y: Number(event.target.value)
-                }))
-              }
-            />
-          </label>
-          <label>
-            Width
-            <input
-              type="number"
-              value={form.width}
-              min={MIN_HINT}
-              onChange={(event) =>
-                setForm((prev) => ({
-                  ...prev,
-                  width: Number(event.target.value)
-                }))
-              }
-            />
-          </label>
-          <label>
-            Height
-            <input
-              type="number"
-              value={form.height}
-              min={MIN_HINT}
-              onChange={(event) =>
-                setForm((prev) => ({
-                  ...prev,
-                  height: Number(event.target.value)
-                }))
-              }
-            />
-          </label>
-        </div>
-        <div className="color-picker">
-          <div className="color-label">Color</div>
-          <div className="color-options">
-            {COLOR_POOL.map((color) => (
-              <button
-                key={color}
-                type="button"
-                className={`color-swatch${form.color === color ? " selected" : ""}`}
-                style={{ background: color }}
-                onClick={() =>
-                  setForm((prev) => ({
-                    ...prev,
-                    color
-                  }))
-                }
-                aria-label={`Select ${color} note color`}
-              />
-            ))}
-          </div>
-        </div>
-        <button className="primary" type="button" onClick={handleAddNote}>
-          Add note
-        </button>
-        <div className="hint">
-          Drag a note onto the trash zone to delete it.
-        </div>
-      </aside>
+      <NoteCreatorPanel form={form} onChange={setForm} onAddNote={handleAddNote} />
       <main ref={boardRef} className="board">
         {notes.map((note) => (
           <NoteCard

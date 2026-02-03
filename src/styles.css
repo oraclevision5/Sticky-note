@@ -129,22 +129,61 @@ input {
   gap: 8px;
 }
 
-.note-colors {
-  display: flex;
-  gap: 6px;
+.note-title-group {
+  flex: 1;
+  min-width: 0;
 }
 
 .note-title {
-  flex: 1;
+  width: 100%;
   border: none;
   background: transparent;
   font-weight: 600;
   font-size: 0.9rem;
-  min-width: 0;
+  padding: 0;
 }
 
 .note-title:focus {
   outline: none;
+}
+
+.note-title-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-actions {
+  position: relative;
+  display: flex;
+  gap: 6px;
+}
+
+.icon-button {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.color-menu {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  z-index: 2;
 }
 
 .color-swatch {
