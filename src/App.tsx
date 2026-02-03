@@ -1,14 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-
-type Note = {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  color: string;
-  text: string;
-};
+import { fetchNotes, saveNotes } from "./api";
+import type { Note } from "./types";
 
 type DragMode = "move" | "resize";
 
@@ -25,6 +17,7 @@ type DragState = {
 
 const COLOR_POOL = ["#fff2a8", "#ffd1dc", "#d9f8d9", "#d7e8ff", "#ffe0b5"];
 const MIN_HINT = 120;
+const STORAGE_KEY = "sticky-notes";
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
@@ -35,7 +28,8 @@ export const App = () => {
     x: 80,
     y: 80,
     width: 220,
-    height: 180
+    height: 180,
+    color: COLOR_POOL[0]
   });
   const dragRef = useRef<DragState | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -46,10 +40,58 @@ export const App = () => {
     return COLOR_POOL[index];
   }, [notes.length]);
 
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as Note[];
+        if (Array.isArray(parsed)) {
+          setNotes(parsed);
+        }
+      } catch {
+        // ignore invalid stored data
+      }
+    }
+
+    let isActive = true;
+    fetchNotes()
+      .then((remoteNotes) => {
+        if (isActive && remoteNotes.length > 0) {
+          setNotes(remoteNotes);
+        }
+      })
+      .catch(() => {
+        // ignore mock API failures
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+    saveNotes(notes).catch(() => {
+      // ignore mock API failures
+    });
+  }, [notes]);
+
+  const bringNoteToFront = (id: string) => {
+    setNotes((prev) => {
+      const index = prev.findIndex((note) => note.id === id);
+      if (index === -1 || index === prev.length - 1) return prev;
+      const updated = [...prev];
+      const [note] = updated.splice(index, 1);
+      updated.push(note);
+      return updated;
+    });
+  };
+
   const startDrag = (event: React.PointerEvent, id: string, mode: DragMode) => {
     event.preventDefault();
     const note = notes.find((item) => item.id === id);
     if (!note) return;
+    bringNoteToFront(id);
 
     dragRef.current = {
       id,
@@ -146,7 +188,7 @@ export const App = () => {
         y: form.y,
         width: form.width,
         height: form.height,
-        color: nextColor,
+        color: form.color || nextColor,
         text: ""
       }
     ]);
@@ -155,6 +197,12 @@ export const App = () => {
   const updateNoteText = (id: string, text: string) => {
     setNotes((prev) =>
       prev.map((note) => (note.id === id ? { ...note, text } : note))
+    );
+  };
+
+  const updateNoteColor = (id: string, color: string) => {
+    setNotes((prev) =>
+      prev.map((note) => (note.id === id ? { ...note, color } : note))
     );
   };
 
@@ -224,6 +272,26 @@ export const App = () => {
             />
           </label>
         </div>
+        <div className="color-picker">
+          <div className="color-label">Color</div>
+          <div className="color-options">
+            {COLOR_POOL.map((color) => (
+              <button
+                key={color}
+                type="button"
+                className={`color-swatch${form.color === color ? " selected" : ""}`}
+                style={{ background: color }}
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    color
+                  }))
+                }
+                aria-label={`Select ${color} note color`}
+              />
+            ))}
+          </div>
+        </div>
         <button className="primary" type="button" onClick={handleAddNote}>
           Add note
         </button>
@@ -243,12 +311,31 @@ export const App = () => {
               height: note.height,
               background: note.color
             }}
+            onPointerDown={() => bringNoteToFront(note.id)}
           >
             <header
               className="note-header"
               onPointerDown={(event) => startDrag(event, note.id, "move")}
             >
-              Drag me
+              <span>Drag me</span>
+              <div className="note-colors">
+                {COLOR_POOL.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    className={`color-swatch${note.color === color ? " selected" : ""}`}
+                    style={{ background: color }}
+                    onPointerDown={(event) => {
+                      event.stopPropagation();
+                    }}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      updateNoteColor(note.id, color);
+                    }}
+                    aria-label={`Set note color to ${color}`}
+                  />
+                ))}
+              </div>
             </header>
             <textarea
               className="note-body"

@@ -46,6 +46,22 @@ body {
   gap: 12px;
 }
 
+.color-picker {
+  display: grid;
+  gap: 8px;
+}
+
+.color-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.color-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 label {
   display: flex;
   flex-direction: column;
@@ -103,6 +119,27 @@ input {
   font-weight: 600;
   font-size: 0.9rem;
   user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.note-colors {
+  display: flex;
+  gap: 6px;
+}
+
+.color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+
+.color-swatch.selected {
+  border-color: #1c1c1c;
 }
 
 .note-body {
