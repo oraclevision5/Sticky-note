@@ -24,61 +24,64 @@ const clamp = (value: number, min: number, max: number) =>
 // Track pointer state across the window so dragging continues outside the board.
 
 export const App = () => {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [form, setForm] = useState({
-    x: 80,
-    y: 80,
-    width: 220,
-    height: 180,
-    color: COLOR_POOL[0],
-    title: "New note"
-  });
-  const dragRef = useRef<DragState | null>(null);
-  const boardRef = useRef<HTMLDivElement>(null);
-  const trashRef = useRef<HTMLDivElement>(null);
-
-  const nextColor = useMemo(() => {
-    const index = notes.length % COLOR_POOL.length;
-    return COLOR_POOL[index];
-  }, [notes.length]);
-
-  useEffect(() => {
-    // Local-first load with a best-effort async sync from the mocked API.
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as Note[];
-        if (Array.isArray(parsed)) {
-          setNotes(parsed);
-        }
-      } catch {
-        // ignore invalid stored data
+const [notes, setNotes] = useState<Note[]>(() => {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored) as Note[];
+      if (Array.isArray(parsed)) {
+        return parsed;
       }
+    } catch {
+      // ignore invalid stored data
     }
+  }
+  return [];
+});
 
-    let isActive = true;
-    fetchNotes()
-      .then((remoteNotes) => {
-        if (isActive && remoteNotes.length > 0) {
-          setNotes(remoteNotes);
-        }
-      })
-      .catch(() => {
-        // ignore mock API failures
-      });
+const [form, setForm] = useState({
+  x: 80,
+  y: 80,
+  width: 220,
+  height: 180,
+  color: COLOR_POOL[0],
+  title: "New note"
+});
 
-    return () => {
-      isActive = false;
-    };
-  }, []);
+const dragRef = useRef<DragState | null>(null);
+const boardRef = useRef<HTMLDivElement>(null);
+const trashRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // Persist notes after each change and sync them asynchronously.
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
-    saveNotes(notes).catch(() => {
+const nextColor = useMemo(() => {
+  const index = notes.length % COLOR_POOL.length;
+  return COLOR_POOL[index];
+}, [notes.length]);
+
+useEffect(() => {
+  // async sync from API only (no localStorage load here anymore)
+  let isActive = true;
+
+  fetchNotes()
+    .then((remoteNotes) => {
+      if (isActive && remoteNotes.length > 0) {
+        setNotes(remoteNotes);
+      }
+    })
+    .catch(() => {
       // ignore mock API failures
     });
-  }, [notes]);
+
+  return () => {
+    isActive = false;
+  };
+}, []);
+
+useEffect(() => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+  saveNotes(notes).catch(() => {
+    // ignore mock API failures
+  });
+}, [notes]);
 
   // Move the selected note to the end of the array for simple z-ordering.
   const bringNoteToFront = (id: string) => {
